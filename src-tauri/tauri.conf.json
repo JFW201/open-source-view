@@ -1,0 +1,78 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nickelpack/tauri/refs/heads/v2/crates/tauri-cli/schema.json",
+  "productName": "Waldorf",
+  "version": "0.1.0",
+  "identifier": "com.waldorf.osint",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "title": "Waldorf — OSINT Monitor",
+    "windows": [
+      {
+        "label": "main",
+        "title": "Waldorf — OSINT Monitor",
+        "width": 1600,
+        "height": 1000,
+        "minWidth": 1200,
+        "minHeight": 700,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss: http://localhost:*"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app", "nsis", "appimage"],
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Open Source Intelligence Monitor",
+    "longDescription": "Waldorf is a comprehensive OSINT desktop application with live air/sea tracking, global news aggregation, market monitoring, prediction markets, and AI-powered intelligence briefings.",
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "hardenedRuntime": true,
+      "entitlements": "./Entitlements.plist",
+      "frameworks": [],
+      "dmg": {
+        "appPosition": { "x": 180, "y": 170 },
+        "applicationFolderPosition": { "x": 480, "y": 170 },
+        "windowSize": { "width": 660, "height": 400 }
+      },
+      "signingIdentity": null
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "nsis": {
+        "installMode": "both"
+      }
+    },
+    "linux": {
+      "deb": { "depends": [] },
+      "appimage": { "bundleMediaFramework": true }
+    }
+  },
+  "plugins": {
+    "store": {},
+    "updater": {
+      "endpoints": [
+        "https://github.com/OWNER/waldorf/releases/latest/download/latest.json"
+      ],
+      "pubkey": ""
+    }
+  }
+}
