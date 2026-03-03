@@ -66,6 +66,15 @@ export const LAYER_CONFIGS: LayerConfig[] = [
     color: [245, 158, 11],
     description: "Nuclear power plants, research reactors, enrichment sites",
   },
+  {
+    id: "country-boundaries",
+    name: "Country Boundaries",
+    category: "geopolitical",
+    visible: true,
+    opacity: 0.6,
+    color: [255, 255, 255],
+    description: "Country borders with hover/click highlighting (Natural Earth 110m)",
+  },
 ];
 
 export const LAYER_CATEGORIES = [

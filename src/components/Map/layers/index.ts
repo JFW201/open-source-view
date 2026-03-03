@@ -1,4 +1,4 @@
-import { ScatterplotLayer, ArcLayer, TextLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, ArcLayer, TextLayer, GeoJsonLayer } from "@deck.gl/layers";
 import type {
   Aircraft,
   Vessel,
@@ -8,6 +8,7 @@ import type {
   NuclearFacility,
   ConflictZone,
   LayerConfig,
+  CountryBoundaryFeature,
 } from "../../../types";
 
 /**
@@ -350,6 +351,68 @@ export function createConflictZonesLayer(
       billboard: true,
       sizeMinPixels: 0,
       sizeMaxPixels: 14,
+    }),
+  ];
+}
+
+// ── Country Boundaries Layer (GeoJSON) ──────────────────────────────────
+
+export function createCountryBoundariesLayer(
+  features: CountryBoundaryFeature[],
+  configs: LayerConfig[],
+  selectedCountryCode: string | null,
+  hoveredCountryCode: string | null,
+  onHover: (code: string | null) => void,
+  onClick: (feature: CountryBoundaryFeature) => void
+) {
+  const { visible, opacity } = getLayerConfig(configs, "country-boundaries");
+  if (!visible || features.length === 0) return [];
+
+  return [
+    new GeoJsonLayer({
+      id: "country-boundaries",
+      data: {
+        type: "FeatureCollection" as const,
+        features,
+      } as any,
+      filled: true,
+      stroked: true,
+      getFillColor: (f: any) => {
+        const code = f.properties?.ISO_A2;
+        if (code === selectedCountryCode) return [59, 130, 246, Math.round(opacity * 50)];
+        if (code === hoveredCountryCode) return [59, 130, 246, Math.round(opacity * 25)];
+        return [0, 0, 0, 0];
+      },
+      getLineColor: (f: any) => {
+        const code = f.properties?.ISO_A2;
+        if (code === selectedCountryCode) return [59, 130, 246, Math.round(opacity * 200)];
+        if (code === hoveredCountryCode) return [59, 130, 246, Math.round(opacity * 140)];
+        return [255, 255, 255, Math.round(opacity * 40)];
+      },
+      getLineWidth: (f: any) => {
+        const code = f.properties?.ISO_A2;
+        if (code === selectedCountryCode) return 2;
+        if (code === hoveredCountryCode) return 1.5;
+        return 0.5;
+      },
+      lineWidthUnits: "pixels" as const,
+      lineWidthMinPixels: 0.5,
+      pickable: true,
+      autoHighlight: false,
+      onHover: (info: any) => {
+        const code = info.object?.properties?.ISO_A2 ?? null;
+        onHover(code);
+      },
+      onClick: (info: any) => {
+        if (info.object) {
+          onClick(info.object);
+        }
+      },
+      updateTriggers: {
+        getFillColor: [selectedCountryCode, hoveredCountryCode, opacity],
+        getLineColor: [selectedCountryCode, hoveredCountryCode, opacity],
+        getLineWidth: [selectedCountryCode, hoveredCountryCode],
+      },
     }),
   ];
 }

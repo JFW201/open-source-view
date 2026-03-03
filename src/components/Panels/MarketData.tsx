@@ -4,6 +4,8 @@ import { useMarketStore } from "../../store/marketStore";
 import { useSettingsStore } from "../../store/settingsStore";
 import { fetchAllMarketIndices } from "../../services/api/markets";
 import clsx from "clsx";
+import { ExportButton } from "./ExportButton";
+import { exportMarkets } from "../../services/export";
 
 export const MarketData: React.FC = () => {
   const { indices, isLoadingIndices, lastUpdated, setIndices, setIsLoadingIndices, setLastUpdated } =
@@ -39,6 +41,10 @@ export const MarketData: React.FC = () => {
       <div className="flex items-center justify-between px-4 py-3 border-b border-waldorf-border">
         <h2 className="text-sm font-semibold">Markets</h2>
         <div className="flex items-center gap-2">
+          <ExportButton
+            onExport={(format) => exportMarkets(indices, format)}
+            disabled={indices.length === 0}
+          />
           <button
             onClick={loadMarkets}
             disabled={isLoadingIndices || !hasApiKey("alphavantage")}

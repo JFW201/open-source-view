@@ -5,6 +5,7 @@ import { fetchLiveFlights } from "../services/api/aviationstack";
 import { fetchAircraft } from "../services/api/opensky";
 import { AISStreamClient } from "../services/api/aisstream";
 import { fetchVessels } from "../services/api/ais";
+import { cache, CACHE_TTL } from "../services/cache";
 
 /**
  * Manages live data polling for air and sea traffic.
@@ -31,6 +32,13 @@ export function useDataPolling() {
 
   // ── Air traffic polling ───────────────────────────────────────────────
   const fetchAirData = useCallback(async () => {
+    // Check cache first
+    const cached = await cache.get<any[]>("air-traffic");
+    if (cached && cached.length > 0) {
+      setAircraft(cached);
+      return;
+    }
+
     setIsLoadingAir(true);
     try {
       // Primary: Aviation Stack
@@ -39,28 +47,35 @@ export function useDataPolling() {
         const data = await fetchLiveFlights(key);
         if (data.length > 0) {
           setAircraft(data);
+          await cache.set("air-traffic", data, CACHE_TTL.AIR_TRAFFIC);
           setIsLoadingAir(false);
           return;
         }
       }
 
       // Fallback: OpenSky Network
+      let data;
       if (hasApiKey("opensky")) {
         const key = getApiKey("opensky")!;
         const [username, password] = key.includes(":")
           ? key.split(":")
           : [key, ""];
-        const data = await fetchAircraft(
+        data = await fetchAircraft(
           username && password ? { username, password } : null
         );
-        setAircraft(data);
       } else {
         // Anonymous OpenSky (rate limited but works)
-        const data = await fetchAircraft(null);
-        setAircraft(data);
+        data = await fetchAircraft(null);
+      }
+      setAircraft(data);
+      if (data.length > 0) {
+        await cache.set("air-traffic", data, CACHE_TTL.AIR_TRAFFIC);
       }
     } catch (err) {
       console.error("Air traffic fetch failed:", err);
+      // Serve stale cache on error
+      const stale = await cache.get<any[]>("air-traffic", true);
+      if (stale && stale.length > 0) setAircraft(stale);
     } finally {
       setIsLoadingAir(false);
     }
@@ -111,12 +126,24 @@ export function useDataPolling() {
     if (hasApiKey("aishub")) {
       const key = getApiKey("aishub")!;
       const fetchSeaData = async () => {
+        // Check cache first
+        const cached = await cache.get<any[]>("sea-traffic");
+        if (cached && cached.length > 0) {
+          setVessels(cached);
+          return;
+        }
+
         setIsLoadingSea(true);
         try {
           const data = await fetchVessels(key);
           setVessels(data);
+          if (data.length > 0) {
+            await cache.set("sea-traffic", data, CACHE_TTL.SEA_TRAFFIC);
+          }
         } catch (err) {
           console.error("AIS fetch failed:", err);
+          const stale = await cache.get<any[]>("sea-traffic", true);
+          if (stale && stale.length > 0) setVessels(stale);
         } finally {
           setIsLoadingSea(false);
         }

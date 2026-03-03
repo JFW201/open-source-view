@@ -267,3 +267,52 @@ export interface FeedItem {
   pub_date: string;
   source: string;
 }
+
+// ── GeoJSON Types ───────────────────────────────────────────────────────
+
+export interface CountryBoundaryFeature {
+  type: "Feature";
+  properties: {
+    ISO_A2?: string;
+    NAME?: string;
+    [key: string]: unknown;
+  };
+  geometry: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: number[][][] | number[][][][];
+  };
+}
+
+// ── Search Types ─────────────────────────────────────────────────────────
+
+export type SearchResultType =
+  | "country"
+  | "news"
+  | "military"
+  | "datacenter"
+  | "nuclear"
+  | "cable"
+  | "conflict"
+  | "ai";
+
+export interface SearchResult {
+  id: string;
+  type: SearchResultType;
+  title: string;
+  subtitle: string;
+  coordinates?: [number, number];
+  score: number;
+  data?: unknown;
+}
+
+// ── Cache Types ──────────────────────────────────────────────────────────
+
+export interface CacheEntry<T = unknown> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+// ── Export Types ──────────────────────────────────────────────────────────
+
+export type ExportFormat = "json" | "csv" | "markdown";

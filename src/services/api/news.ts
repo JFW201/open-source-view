@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { NewsItem, FeedItem, FeedSource } from "../../types";
 import { RSS_FEEDS } from "../../constants/feeds";
+import { cache, CACHE_TTL } from "../cache";
 
 let isTauri = false;
 try {
@@ -14,10 +15,22 @@ try {
  * Falls back to a CORS proxy in browser dev mode.
  */
 export async function fetchAllFeeds(): Promise<NewsItem[]> {
-  if (isTauri) {
-    return fetchViaTauri();
+  // Check cache first
+  const cached = await cache.get<NewsItem[]>("news-feeds");
+  if (cached && cached.length > 0) return cached;
+
+  try {
+    const items = isTauri ? await fetchViaTauri() : await fetchViaBrowserFallback();
+    if (items.length > 0) {
+      await cache.set("news-feeds", items, CACHE_TTL.NEWS);
+    }
+    return items;
+  } catch (err) {
+    // Serve stale cache on network error
+    const stale = await cache.get<NewsItem[]>("news-feeds", true);
+    if (stale && stale.length > 0) return stale;
+    throw err;
   }
-  return fetchViaBrowserFallback();
 }
 
 async function fetchViaTauri(): Promise<NewsItem[]> {

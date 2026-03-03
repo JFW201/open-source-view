@@ -1,5 +1,6 @@
 import { proxyFetchJSON } from "../proxy";
 import type { GrokSummary, GrokRequest } from "../../types";
+import { cache, CACHE_TTL } from "../cache";
 
 /**
  * xAI Grok API — unbiased news summarization.
@@ -38,6 +39,11 @@ export async function generateNewsSummary(
   apiKey: string,
   request: GrokRequest
 ): Promise<GrokSummary> {
+  // Build a cache key from the first few headlines for dedup
+  const cacheKey = `grok-summary-${request.country ?? "global"}-${request.headlines.slice(0, 5).join("|").slice(0, 100)}`;
+  const cached = await cache.get<GrokSummary>(cacheKey);
+  if (cached) return cached;
+
   const headlineList = request.headlines
     .slice(0, 30)
     .map((h, i) => `${i + 1}. ${h}`)
@@ -78,13 +84,16 @@ export async function generateNewsSummary(
   const content = data.choices[0]?.message?.content ?? "{}";
   const parsed = JSON.parse(content);
 
-  return {
+  const result: GrokSummary = {
     summary: parsed.summary ?? "Unable to generate summary.",
     key_points: parsed.key_points ?? [],
     sentiment: parsed.sentiment ?? "neutral",
     confidence: parsed.confidence ?? 0.5,
     generated_at: new Date().toISOString(),
   };
+
+  await cache.set(cacheKey, result, CACHE_TTL.AI_SUMMARY);
+  return result;
 }
 
 /**

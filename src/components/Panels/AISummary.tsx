@@ -5,6 +5,8 @@ import { useSettingsStore } from "../../store/settingsStore";
 import { generateNewsSummary } from "../../services/api/grok";
 import type { GrokSummary } from "../../types";
 import clsx from "clsx";
+import { ExportButton } from "./ExportButton";
+import { exportAISummary } from "../../services/export";
 
 export const AISummary: React.FC = () => {
   const newsItems = useNewsStore((s) => s.items);
@@ -45,18 +47,24 @@ export const AISummary: React.FC = () => {
           <Sparkles size={14} className="text-waldorf-accent" />
           Grok Intelligence Brief
         </h2>
-        <button
-          onClick={handleGenerate}
-          disabled={isLoading || !hasApiKey("xai") || newsItems.length === 0}
-          className="text-[10px] px-2.5 py-1 bg-waldorf-accent/20 text-waldorf-accent rounded hover:bg-waldorf-accent/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-        >
-          {isLoading ? (
-            <Loader2 size={10} className="animate-spin" />
-          ) : (
-            <RefreshCw size={10} />
-          )}
-          {isLoading ? "Generating..." : "Generate Brief"}
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton
+            onExport={(format) => summary && exportAISummary(summary, format)}
+            disabled={!summary}
+          />
+          <button
+            onClick={handleGenerate}
+            disabled={isLoading || !hasApiKey("xai") || newsItems.length === 0}
+            className="text-[10px] px-2.5 py-1 bg-waldorf-accent/20 text-waldorf-accent rounded hover:bg-waldorf-accent/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+          >
+            {isLoading ? (
+              <Loader2 size={10} className="animate-spin" />
+            ) : (
+              <RefreshCw size={10} />
+            )}
+            {isLoading ? "Generating..." : "Generate Brief"}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4">

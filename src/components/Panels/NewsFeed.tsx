@@ -14,6 +14,8 @@ import {
 import type { NewsCategory } from "../../types";
 import { formatDistanceToNow } from "date-fns";
 import clsx from "clsx";
+import { ExportButton } from "./ExportButton";
+import { exportNews } from "../../services/export";
 
 const CATEGORIES: Array<NewsCategory | "all"> = [
   "all",
@@ -74,6 +76,10 @@ export const NewsFeed: React.FC = () => {
               })}
             </span>
           )}
+          <ExportButton
+            onExport={(format) => exportNews(items, format)}
+            disabled={items.length === 0}
+          />
           <button
             onClick={loadFeeds}
             disabled={isLoading}

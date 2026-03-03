@@ -1,5 +1,6 @@
 import { proxyFetchJSON } from "../proxy";
 import type { MarketIndex } from "../../types";
+import { cache, CACHE_TTL } from "../cache";
 
 /**
  * Alpha Vantage — stock market and economic data.
@@ -58,6 +59,10 @@ export async function fetchMarketQuote(
 export async function fetchAllMarketIndices(
   apiKey: string
 ): Promise<MarketIndex[]> {
+  // Check cache first (avoids burning rate-limited API calls)
+  const cached = await cache.get<MarketIndex[]>("market-indices");
+  if (cached && cached.length > 0) return cached;
+
   // Fetch sequentially to respect rate limits (5 calls/minute on free tier)
   const results: MarketIndex[] = [];
 
@@ -70,6 +75,10 @@ export async function fetchAllMarketIndices(
     }
     // Alpha Vantage free tier: 5 requests per minute
     await new Promise((r) => setTimeout(r, 12500));
+  }
+
+  if (results.length > 0) {
+    await cache.set("market-indices", results, CACHE_TTL.MARKETS);
   }
 
   return results;

@@ -6,12 +6,14 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useMapStore } from "../../store/mapStore";
 import { useSettingsStore } from "../../store/settingsStore";
 import { usePanelStore } from "../../store/panelStore";
+import { useCountryBoundaries } from "../../hooks/useCountryBoundaries";
 import { COUNTRIES } from "../../data/countries";
 import { MILITARY_BASES } from "../../data/militaryBases";
 import { DATA_CENTERS } from "../../data/dataCenters";
 import { UNDERSEA_CABLES } from "../../data/underseaCables";
 import { NUCLEAR_FACILITIES } from "../../data/nuclearFacilities";
 import { CONFLICT_ZONES } from "../../data/conflictZones";
+import type { CountryBoundaryFeature } from "../../types";
 
 import {
   createAirTrafficLayer,
@@ -21,6 +23,7 @@ import {
   createUnderseaCablesLayer,
   createNuclearFacilitiesLayer,
   createConflictZonesLayer,
+  createCountryBoundariesLayer,
 } from "./layers";
 
 const MAP_STYLES: Record<string, string> = {
@@ -32,12 +35,19 @@ const MAP_STYLES: Record<string, string> = {
 export const WaldorfMap: React.FC = () => {
   const deckRef = useRef<any>(null);
 
+  // Load country boundaries GeoJSON on mount
+  useCountryBoundaries();
+
   const viewState = useMapStore((s) => s.viewState);
   const setViewState = useMapStore((s) => s.setViewState);
   const layers = useMapStore((s) => s.layers);
   const aircraft = useMapStore((s) => s.aircraft);
   const vessels = useMapStore((s) => s.vessels);
+  const selectedCountry = useMapStore((s) => s.selectedCountry);
   const setSelectedCountry = useMapStore((s) => s.setSelectedCountry);
+  const countryBoundaries = useMapStore((s) => s.countryBoundaries);
+  const hoveredCountryCode = useMapStore((s) => s.hoveredCountryCode);
+  const setHoveredCountryCode = useMapStore((s) => s.setHoveredCountryCode);
   const mapStyle = useSettingsStore((s) => s.settings.mapStyle);
   const { setActivePanel } = usePanelStore();
 
@@ -48,12 +58,24 @@ export const WaldorfMap: React.FC = () => {
     [setViewState]
   );
 
+  const handleBoundaryClick = useCallback(
+    (feature: CountryBoundaryFeature) => {
+      const isoA2 = feature.properties?.ISO_A2;
+      if (!isoA2) return;
+
+      const country = COUNTRIES.find((c) => c.code === isoA2);
+      if (country) {
+        setSelectedCountry(country);
+        setActivePanel("country");
+      }
+    },
+    [setSelectedCountry, setActivePanel]
+  );
+
   const handleMapClick = useCallback(
     (event: any) => {
-      // Check if we clicked on a deck.gl feature
       if (event.object) return;
 
-      // Reverse geocode: find nearest country to click point
       const [lng, lat] = event.coordinate ?? [0, 0];
       if (!lng && !lat) return;
 
@@ -67,7 +89,6 @@ export const WaldorfMap: React.FC = () => {
         }
       }
 
-      // Only select if click is reasonably close (within ~15 degrees)
       if (minDist < 15) {
         setSelectedCountry(nearest);
         setActivePanel("country");
@@ -76,16 +97,17 @@ export const WaldorfMap: React.FC = () => {
     [setSelectedCountry, setActivePanel]
   );
 
-  const handleLayerClick = useCallback(
-    (info: any) => {
-      if (!info.object) return;
-      // Could open a detail tooltip or panel for the clicked feature
-    },
-    []
-  );
-
   const deckLayers = useMemo(() => {
     return [
+      // Country boundaries at the bottom so everything renders on top
+      ...createCountryBoundariesLayer(
+        countryBoundaries,
+        layers,
+        selectedCountry?.code ?? null,
+        hoveredCountryCode,
+        setHoveredCountryCode,
+        handleBoundaryClick
+      ),
       ...createConflictZonesLayer(CONFLICT_ZONES, layers),
       ...createUnderseaCablesLayer(UNDERSEA_CABLES, layers),
       ...createMilitaryBasesLayer(MILITARY_BASES, layers),
@@ -94,10 +116,21 @@ export const WaldorfMap: React.FC = () => {
       ...createSeaTrafficLayer(vessels, layers),
       ...createAirTrafficLayer(aircraft, layers),
     ];
-  }, [layers, aircraft, vessels]);
+  }, [layers, aircraft, vessels, countryBoundaries, selectedCountry, hoveredCountryCode, setHoveredCountryCode, handleBoundaryClick]);
 
   const getTooltip = useCallback(({ object }: { object: any }) => {
     if (!object) return null;
+
+    // Country boundary hover
+    if (object.properties?.ISO_A2 && object.geometry) {
+      return {
+        html: `<div class="waldorf-tooltip">
+          <div class="tooltip-title">${object.properties.NAME || object.properties.ISO_A2}</div>
+          <div class="tooltip-meta">Click to view intelligence</div>
+        </div>`,
+        style: { backgroundColor: "transparent", border: "none", padding: 0 },
+      };
+    }
 
     // Military base
     if (object.branch) {
