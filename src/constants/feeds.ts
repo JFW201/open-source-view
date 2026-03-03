@@ -29,7 +29,7 @@ export const RSS_FEEDS: RSSFeed[] = [
   // ── Economic / Finance ──────────────────────────────────────────────────
   { url: "https://feeds.bloomberg.com/markets/news.rss", name: "Bloomberg Markets", category: "economic" },
   { url: "https://www.ft.com/?format=rss", name: "Financial Times", category: "economic" },
-  { url: "https://feeds.a]reuters.com/reuters/businessNews", name: "Reuters Business", category: "economic" },
+  { url: "https://feeds.reuters.com/reuters/businessNews", name: "Reuters Business", category: "economic" },
 
   // ── Energy ──────────────────────────────────────────────────────────────
   { url: "https://oilprice.com/rss/main", name: "OilPrice", category: "energy" },

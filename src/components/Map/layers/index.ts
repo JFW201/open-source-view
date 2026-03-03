@@ -1,4 +1,4 @@
-import { ScatterplotLayer, ArcLayer, IconLayer, TextLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, ArcLayer, TextLayer } from "@deck.gl/layers";
 import type {
   Aircraft,
   Vessel,

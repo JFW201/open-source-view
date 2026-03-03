@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Wifi, WifiOff, Clock, MapPin } from "lucide-react";
 import { useMapStore } from "../../store/mapStore";
 import { useNewsStore } from "../../store/newsStore";
@@ -10,7 +10,18 @@ export const StatusBar: React.FC = () => {
   const newsCount = useNewsStore((s) => s.items.length);
   const lastUpdated = useNewsStore((s) => s.lastUpdated);
 
-  const isConnected = true; // TODO: real connectivity check
+  const [isConnected, setIsConnected] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsConnected(true);
+    const handleOffline = () => setIsConnected(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   return (
     <footer className="h-6 bg-waldorf-surface border-t border-waldorf-border flex items-center justify-between px-3 text-[10px] text-waldorf-text-dim select-none">
