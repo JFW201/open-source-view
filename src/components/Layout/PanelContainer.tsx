@@ -10,6 +10,7 @@ import { Settings } from "../Panels/Settings";
 import { AlertsPanel } from "../Panels/AlertsPanel";
 import { TimelinePanel } from "../Panels/TimelinePanel";
 import { SignalsPanel } from "../Panels/SignalsPanel";
+import { DebugPanel } from "../Panels/DebugPanel";
 
 const PANELS: Record<string, React.FC> = {
   news: NewsFeed,
@@ -22,6 +23,7 @@ const PANELS: Record<string, React.FC> = {
   alerts: AlertsPanel,
   timeline: TimelinePanel,
   signals: SignalsPanel,
+  debug: DebugPanel,
 };
 
 export const PanelContainer: React.FC = () => {

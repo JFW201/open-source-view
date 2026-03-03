@@ -457,7 +457,8 @@ export type PanelId =
   | "settings"
   | "alerts"
   | "timeline"
-  | "signals";
+  | "signals"
+  | "debug";
 
 // ── Tauri IPC Types ─────────────────────────────────────────────────────────
 
