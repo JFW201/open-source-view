@@ -6,6 +6,8 @@
     "core:default",
     "store:default",
     "shell:default",
-    "updater:default"
+    "updater:default",
+    "process:allow-restart",
+    "dialog:default"
   ]
 }

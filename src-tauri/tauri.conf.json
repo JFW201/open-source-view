@@ -31,7 +31,8 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg", "app", "updater"],
+    "targets": ["dmg", "app", "nsis", "appimage"],
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -44,17 +45,21 @@
     "longDescription": "Waldorf is a comprehensive OSINT desktop application with live air/sea tracking, global news aggregation, market monitoring, prediction markets, and AI-powered intelligence briefings.",
     "macOS": {
       "minimumSystemVersion": "11.0",
+      "hardenedRuntime": true,
+      "entitlements": "./Entitlements.plist",
       "frameworks": [],
       "dmg": {
         "appPosition": { "x": 180, "y": 170 },
         "applicationFolderPosition": { "x": 480, "y": 170 },
         "windowSize": { "width": 660, "height": 400 }
       },
-      "signingIdentity": null,
-      "entitlements": null
+      "signingIdentity": null
     },
     "windows": {
-      "webviewInstallMode": { "type": "embedBootstrapper" }
+      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "nsis": {
+        "installMode": "both"
+      }
     },
     "linux": {
       "deb": { "depends": [] },
@@ -67,7 +72,6 @@
       "endpoints": [
         "https://github.com/OWNER/waldorf/releases/latest/download/latest.json"
       ],
-      "dialog": true,
       "pubkey": ""
     }
   }

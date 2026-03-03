@@ -5,129 +5,163 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      draft:
+        description: "Create as draft release"
+        required: false
+        default: true
+        type: boolean
 
-permissions:
-  contents: write
-
-env:
-  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-macos:
-    runs-on: macos-latest
+  build:
+    permissions:
+      contents: write
     strategy:
+      fail-fast: false
       matrix:
-        target: [aarch64-apple-darwin, x86_64-apple-darwin]
+        include:
+          # Apple Silicon (M-series) — native ARM64
+          - platform: "macos-14"
+            args: "--target aarch64-apple-darwin"
+            label: "macOS-ARM64"
+          # Intel Mac — x86_64
+          - platform: "macos-latest"
+            args: "--target x86_64-apple-darwin"
+            label: "macOS-x64"
+          # Windows
+          - platform: "windows-latest"
+            args: ""
+            label: "Windows-x64"
+          # Linux
+          - platform: "ubuntu-22.04"
+            args: ""
+            label: "Linux-x64"
+
+    runs-on: ${{ matrix.platform }}
+    name: Build (${{ matrix.label }})
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: "22"
+          cache: "npm"
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ contains(matrix.platform, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: "./src-tauri -> target"
 
-      - name: Install dependencies
+      - name: Install Linux dependencies
+        if: contains(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build Tauri app
+      # ── macOS code signing ──────────────────────────────────────────────
+      - name: Check signing credentials
+        if: contains(matrix.platform, 'macos')
+        id: signing-check
+        run: |
+          if [ -n "${{ secrets.APPLE_CERTIFICATE }}" ] && \
+             [ -n "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}" ] && \
+             [ -n "${{ secrets.KEYCHAIN_PASSWORD }}" ]; then
+            echo "can_sign=true" >> $GITHUB_OUTPUT
+          else
+            echo "can_sign=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Signing secrets not configured — building unsigned"
+          fi
+
+      - name: Import Apple Developer Certificate
+        if: contains(matrix.platform, 'macos') && steps.signing-check.outputs.can_sign == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security import certificate.p12 -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain \
+            | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+          echo "APPLE_SIGNING_IDENTITY=$IDENTITY" >> $GITHUB_ENV
+
+      # ── Build (signed) ─────────────────────────────────────────────────
+      - name: Build and release (signed)
+        if: "!contains(matrix.platform, 'macos') || steps.signing-check.outputs.can_sign == 'true'"
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS code signing
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          # macOS notarization
+          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: "Waldorf v__VERSION__"
-          releaseBody: "See the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
-          releaseDraft: true
+          releaseBody: "Download the installer for your platform below."
+          releaseDraft: ${{ github.event_name == 'workflow_dispatch' && fromJSON(github.event.inputs.draft) || true }}
           prerelease: false
-          args: --target ${{ matrix.target }}
+          args: ${{ matrix.args }}
+          retryAttempts: 1
 
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Tauri app
+      # ── Build (unsigned fallback) ──────────────────────────────────────
+      - name: Build and release (unsigned)
+        if: contains(matrix.platform, 'macos') && steps.signing-check.outputs.can_sign == 'false'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: "Waldorf v__VERSION__"
-          releaseBody: "See the changelog for details."
-          releaseDraft: true
+          releaseBody: "Download the installer for your platform below."
+          releaseDraft: ${{ github.event_name == 'workflow_dispatch' && fromJSON(github.event.inputs.draft) || true }}
           prerelease: false
+          args: ${{ matrix.args }}
+          retryAttempts: 1
 
-  build-linux:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install system dependencies
+      # ── Post-build verification ────────────────────────────────────────
+      - name: Verify macOS code signature
+        if: contains(matrix.platform, 'macos') && steps.signing-check.outputs.can_sign == 'true'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          APP_PATH=$(find src-tauri/target -type d -path '*/bundle/macos/*.app' | head -1)
+          if [ -n "$APP_PATH" ]; then
+            echo "Verifying: $APP_PATH"
+            codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          fi
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: "Waldorf v__VERSION__"
-          releaseBody: "See the changelog for details."
-          releaseDraft: true
-          prerelease: false
+      - name: Cleanup signing materials
+        if: always() && contains(matrix.platform, 'macos')
+        run: |
+          rm -f certificate.p12
+          security delete-keychain build.keychain || true

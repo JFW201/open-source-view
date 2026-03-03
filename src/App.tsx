@@ -6,6 +6,7 @@ import { PanelContainer } from "./components/Layout/PanelContainer";
 import { StatusBar } from "./components/Layout/StatusBar";
 import { WaldorfMap } from "./components/Map/WaldorfMap";
 import { useDataPolling } from "./hooks/useDataPolling";
+import { useAutoUpdater } from "./hooks/useAutoUpdater";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +19,8 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
+  // Check for updates on launch (non-blocking, Tauri-only)
+  useAutoUpdater();
   // Initialize live data polling for air/sea traffic
   useDataPolling();
 

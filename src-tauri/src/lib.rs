@@ -184,28 +184,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::default().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             proxy_request,
             fetch_rss,
             fetch_rss_batch,
         ])
-        .setup(|app| {
-            // Check for updates on launch (non-blocking)
-            let handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                if let Ok(update) = tauri_plugin_updater::Builder::default()
-                    .build()
-                    .check(&handle)
-                    .await
-                {
-                    if let Some(_update) = update {
-                        // The updater plugin dialog handles the rest
-                        // when "dialog": true in tauri.conf.json
-                    }
-                }
-            });
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error while running Waldorf");
 }
