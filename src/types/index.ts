@@ -229,6 +229,124 @@ export interface AppSettings {
   enableNotifications: boolean;
 }
 
+// ── Alert & Watchlist Types ─────────────────────────────────────────────────
+
+export type AlertConditionType =
+  | "geofence_entry"
+  | "news_keyword"
+  | "aircraft_callsign"
+  | "vessel_mmsi"
+  | "country_event";
+
+export interface GeofenceRegion {
+  center: [number, number];
+  radiusKm: number;
+  name: string;
+}
+
+export interface AlertCondition {
+  type: AlertConditionType;
+  value: string;
+  geofence?: GeofenceRegion;
+}
+
+export interface WatchlistAlert {
+  id: string;
+  name: string;
+  condition: AlertCondition;
+  enabled: boolean;
+  createdAt: string;
+  lastTriggeredAt: string | null;
+  triggerCount: number;
+}
+
+export interface AlertNotification {
+  id: string;
+  alertId: string;
+  alertName: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  data?: {
+    coordinates?: [number, number];
+    type: string;
+  };
+}
+
+// ── Historical Playback Types ──────────────────────────────────────────────
+
+export interface HistoricalSnapshot {
+  timestamp: number;
+  aircraft: Aircraft[];
+  vessels: Vessel[];
+}
+
+// ── Timeline / Event Log Types ─────────────────────────────────────────────
+
+export type TimelineEventType =
+  | "news"
+  | "aircraft_detected"
+  | "vessel_detected"
+  | "alert_triggered"
+  | "conflict"
+  | "economic"
+  | "military";
+
+export interface TimelineEvent {
+  id: string;
+  type: TimelineEventType;
+  title: string;
+  description: string;
+  timestamp: string;
+  coordinates?: [number, number];
+  source?: string;
+  severity?: "info" | "warning" | "critical";
+  relatedCountry?: string;
+}
+
+// ── Economic Indicators Types ──────────────────────────────────────────────
+
+export interface EconomicIndicators {
+  countryCode: string;
+  gdp?: { value: number; year: number };
+  gdpGrowth?: { value: number; year: number };
+  inflation?: { value: number; year: number };
+  unemployment?: { value: number; year: number };
+  tradeBalance?: { value: number; year: number };
+  populationGrowth?: { value: number; year: number };
+  fetchedAt: string;
+}
+
+// ── Annotation Types ───────────────────────────────────────────────────────
+
+export type AnnotationType = "marker" | "polygon" | "circle";
+
+export interface MapAnnotation {
+  id: string;
+  type: AnnotationType;
+  name: string;
+  description: string;
+  color: [number, number, number];
+  coordinates: [number, number];
+  polygonCoords?: [number, number][];
+  radiusKm?: number;
+  createdAt: string;
+}
+
+// ── Measurement Types ──────────────────────────────────────────────────────
+
+export interface MeasurementPoint {
+  longitude: number;
+  latitude: number;
+}
+
+export interface Measurement {
+  id: string;
+  points: MeasurementPoint[];
+  totalDistanceKm: number;
+  createdAt: string;
+}
+
 // ── Panel Types ─────────────────────────────────────────────────────────────
 
 export type PanelId =
@@ -238,7 +356,9 @@ export type PanelId =
   | "ai"
   | "predictions"
   | "twitter"
-  | "settings";
+  | "settings"
+  | "alerts"
+  | "timeline";
 
 // ── Tauri IPC Types ─────────────────────────────────────────────────────────
 

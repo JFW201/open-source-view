@@ -7,6 +7,8 @@ import { PredictionMarkets } from "../Panels/PredictionMarkets";
 import { TwitterFeed } from "../Panels/TwitterFeed";
 import { AISummary } from "../Panels/AISummary";
 import { Settings } from "../Panels/Settings";
+import { AlertsPanel } from "../Panels/AlertsPanel";
+import { TimelinePanel } from "../Panels/TimelinePanel";
 
 const PANELS: Record<string, React.FC> = {
   news: NewsFeed,
@@ -16,6 +18,8 @@ const PANELS: Record<string, React.FC> = {
   twitter: TwitterFeed,
   ai: AISummary,
   settings: Settings,
+  alerts: AlertsPanel,
+  timeline: TimelinePanel,
 };
 
 export const PanelContainer: React.FC = () => {

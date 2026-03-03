@@ -7,6 +7,7 @@ import { StatusBar } from "./components/Layout/StatusBar";
 import { WaldorfMap } from "./components/Map/WaldorfMap";
 import { useDataPolling } from "./hooks/useDataPolling";
 import { useAutoUpdater } from "./hooks/useAutoUpdater";
+import { useAlertEvaluation } from "./hooks/useAlertEvaluation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,6 +24,8 @@ function AppContent() {
   useAutoUpdater();
   // Initialize live data polling for air/sea traffic
   useDataPolling();
+  // Evaluate alert conditions and generate timeline events
+  useAlertEvaluation();
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-waldorf-bg text-waldorf-text">

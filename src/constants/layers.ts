@@ -75,6 +75,24 @@ export const LAYER_CONFIGS: LayerConfig[] = [
     color: [255, 255, 255],
     description: "Country borders with hover/click highlighting (Natural Earth 110m)",
   },
+  {
+    id: "air-heatmap",
+    name: "Air Traffic Heatmap",
+    category: "tracking",
+    visible: false,
+    opacity: 0.6,
+    color: [34, 197, 94],
+    description: "Density heatmap of aircraft positions",
+  },
+  {
+    id: "sea-heatmap",
+    name: "Sea Traffic Heatmap",
+    category: "tracking",
+    visible: false,
+    opacity: 0.6,
+    color: [96, 165, 250],
+    description: "Density heatmap of vessel positions",
+  },
 ];
 
 export const LAYER_CATEGORIES = [

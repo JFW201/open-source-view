@@ -7,12 +7,20 @@ import {
   Globe2,
   Sparkles,
   Loader2,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  BarChart3,
+  Briefcase,
+  ArrowUpDown,
+  RefreshCw,
 } from "lucide-react";
 import { useMapStore } from "../../store/mapStore";
 import { useNewsStore } from "../../store/newsStore";
 import { useSettingsStore } from "../../store/settingsStore";
 import { usePanelStore } from "../../store/panelStore";
 import { generateCountryBrief } from "../../services/api/grok";
+import { useEconomicIndicators } from "../../hooks/useEconomicIndicators";
 import type { GrokSummary } from "../../types";
 
 export const CountryDetail: React.FC = () => {
@@ -25,6 +33,8 @@ export const CountryDetail: React.FC = () => {
 
   const [brief, setBrief] = useState<GrokSummary | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { indicators, isLoading: isLoadingEcon, refetch: refetchEcon } =
+    useEconomicIndicators(selectedCountry?.code ?? null);
 
   const handleClose = useCallback(() => {
     setSelectedCountry(null);
@@ -135,6 +145,154 @@ export const CountryDetail: React.FC = () => {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Economic Indicators */}
+      <div className="px-4 py-3 border-b border-waldorf-border">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-semibold text-waldorf-text-dim flex items-center gap-1.5">
+            <BarChart3 size={12} /> Economic Indicators
+          </h3>
+          <button
+            onClick={refetchEcon}
+            disabled={isLoadingEcon}
+            className="p-0.5 hover:bg-waldorf-surface-bright rounded transition-colors"
+            title="Refresh indicators"
+          >
+            <RefreshCw
+              size={10}
+              className={`text-waldorf-text-dim ${isLoadingEcon ? "animate-spin" : ""}`}
+            />
+          </button>
+        </div>
+
+        {isLoadingEcon ? (
+          <div className="flex items-center gap-1.5 text-[10px] text-waldorf-text-dim">
+            <Loader2 size={10} className="animate-spin" />
+            Loading World Bank data...
+          </div>
+        ) : indicators ? (
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            {indicators.gdp && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <DollarSign size={10} className="text-waldorf-text-dim flex-shrink-0" />
+                <div>
+                  <div className="text-[10px] text-waldorf-text-dim">GDP</div>
+                  <div className="text-waldorf-text font-mono text-[11px]">
+                    ${indicators.gdp.value >= 1e12
+                      ? `${(indicators.gdp.value / 1e12).toFixed(2)}T`
+                      : indicators.gdp.value >= 1e9
+                        ? `${(indicators.gdp.value / 1e9).toFixed(1)}B`
+                        : `${(indicators.gdp.value / 1e6).toFixed(0)}M`}
+                    <span className="text-[9px] text-waldorf-text-dim ml-0.5">
+                      ({indicators.gdp.year})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {indicators.gdpGrowth && (
+              <div className="flex items-center gap-1.5 text-xs">
+                {indicators.gdpGrowth.value >= 0 ? (
+                  <TrendingUp size={10} className="text-waldorf-success flex-shrink-0" />
+                ) : (
+                  <TrendingDown size={10} className="text-waldorf-danger flex-shrink-0" />
+                )}
+                <div>
+                  <div className="text-[10px] text-waldorf-text-dim">GDP Growth</div>
+                  <div
+                    className={`font-mono text-[11px] ${
+                      indicators.gdpGrowth.value >= 0
+                        ? "text-waldorf-success"
+                        : "text-waldorf-danger"
+                    }`}
+                  >
+                    {indicators.gdpGrowth.value >= 0 ? "+" : ""}
+                    {indicators.gdpGrowth.value.toFixed(1)}%
+                    <span className="text-[9px] text-waldorf-text-dim ml-0.5">
+                      ({indicators.gdpGrowth.year})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {indicators.inflation && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <ArrowUpDown size={10} className="text-waldorf-warning flex-shrink-0" />
+                <div>
+                  <div className="text-[10px] text-waldorf-text-dim">Inflation</div>
+                  <div className="text-waldorf-text font-mono text-[11px]">
+                    {indicators.inflation.value.toFixed(1)}%
+                    <span className="text-[9px] text-waldorf-text-dim ml-0.5">
+                      ({indicators.inflation.year})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {indicators.unemployment && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <Briefcase size={10} className="text-waldorf-text-dim flex-shrink-0" />
+                <div>
+                  <div className="text-[10px] text-waldorf-text-dim">Unemployment</div>
+                  <div className="text-waldorf-text font-mono text-[11px]">
+                    {indicators.unemployment.value.toFixed(1)}%
+                    <span className="text-[9px] text-waldorf-text-dim ml-0.5">
+                      ({indicators.unemployment.year})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {indicators.tradeBalance && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <DollarSign size={10} className="text-waldorf-text-dim flex-shrink-0" />
+                <div>
+                  <div className="text-[10px] text-waldorf-text-dim">Trade Balance</div>
+                  <div
+                    className={`font-mono text-[11px] ${
+                      indicators.tradeBalance.value >= 0
+                        ? "text-waldorf-success"
+                        : "text-waldorf-danger"
+                    }`}
+                  >
+                    {indicators.tradeBalance.value >= 0 ? "+" : ""}$
+                    {Math.abs(indicators.tradeBalance.value) >= 1e9
+                      ? `${(indicators.tradeBalance.value / 1e9).toFixed(1)}B`
+                      : `${(indicators.tradeBalance.value / 1e6).toFixed(0)}M`}
+                    <span className="text-[9px] text-waldorf-text-dim ml-0.5">
+                      ({indicators.tradeBalance.year})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {indicators.populationGrowth && (
+              <div className="flex items-center gap-1.5 text-xs">
+                <Users size={10} className="text-waldorf-text-dim flex-shrink-0" />
+                <div>
+                  <div className="text-[10px] text-waldorf-text-dim">Pop Growth</div>
+                  <div className="text-waldorf-text font-mono text-[11px]">
+                    {indicators.populationGrowth.value >= 0 ? "+" : ""}
+                    {indicators.populationGrowth.value.toFixed(2)}%
+                    <span className="text-[9px] text-waldorf-text-dim ml-0.5">
+                      ({indicators.populationGrowth.year})
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-[10px] text-waldorf-text-dim">
+            No economic data available for this country.
+          </p>
+        )}
+        {indicators && (
+          <div className="mt-1.5 text-[9px] text-waldorf-text-dim">
+            Source: World Bank Open Data
+          </div>
+        )}
       </div>
 
       {/* AI Brief */}
