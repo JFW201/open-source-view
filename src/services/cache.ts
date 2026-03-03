@@ -110,4 +110,7 @@ export const CACHE_TTL = {
   GEOJSON: Infinity,            // Static data, never expires
   TWEETS: 3 * 60 * 1000,        // 3 minutes
   PREDICTIONS: 5 * 60 * 1000,   // 5 minutes
+  GDELT: 10 * 60 * 1000,        // 10 minutes
+  ACLED: 30 * 60 * 1000,        // 30 minutes (conflict data updates slowly)
+  FIRMS: 15 * 60 * 1000,        // 15 minutes (satellite passes ~every 12h)
 } as const;

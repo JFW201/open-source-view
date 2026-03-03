@@ -1,5 +1,15 @@
 import { create } from "zustand";
-import type { ViewState, LayerConfig, Aircraft, Vessel, Country, CountryBoundaryFeature } from "../types";
+import type {
+  ViewState,
+  LayerConfig,
+  Aircraft,
+  Vessel,
+  Country,
+  CountryBoundaryFeature,
+  GdeltEvent,
+  AcledEvent,
+  FirmsHotspot,
+} from "../types";
 import { LAYER_CONFIGS } from "../constants/layers";
 
 interface MapState {
@@ -14,6 +24,11 @@ interface MapState {
   countryBoundaries: CountryBoundaryFeature[];
   hoveredCountryCode: string | null;
 
+  // OSINT data layers
+  gdeltEvents: GdeltEvent[];
+  acledEvents: AcledEvent[];
+  firmsHotspots: FirmsHotspot[];
+
   setViewState: (viewState: Partial<ViewState>) => void;
   flyTo: (longitude: number, latitude: number, zoom?: number) => void;
   toggleLayer: (layerId: string) => void;
@@ -27,6 +42,11 @@ interface MapState {
   setCountryBoundaries: (features: CountryBoundaryFeature[]) => void;
   setHoveredCountryCode: (code: string | null) => void;
   isLayerVisible: (layerId: string) => boolean;
+
+  // OSINT setters
+  setGdeltEvents: (events: GdeltEvent[]) => void;
+  setAcledEvents: (events: AcledEvent[]) => void;
+  setFirmsHotspots: (hotspots: FirmsHotspot[]) => void;
 }
 
 const INITIAL_VIEW_STATE: ViewState = {
@@ -48,6 +68,9 @@ export const useMapStore = create<MapState>()((set, get) => ({
   isLoadingSea: false,
   countryBoundaries: [],
   hoveredCountryCode: null,
+  gdeltEvents: [],
+  acledEvents: [],
+  firmsHotspots: [],
 
   setViewState: (partial) =>
     set((state) => ({ viewState: { ...state.viewState, ...partial } })),
@@ -79,6 +102,9 @@ export const useMapStore = create<MapState>()((set, get) => ({
   setIsLoadingSea: (loading) => set({ isLoadingSea: loading }),
   setCountryBoundaries: (features) => set({ countryBoundaries: features }),
   setHoveredCountryCode: (code) => set({ hoveredCountryCode: code }),
+  setGdeltEvents: (events) => set({ gdeltEvents: events }),
+  setAcledEvents: (events) => set({ acledEvents: events }),
+  setFirmsHotspots: (hotspots) => set({ firmsHotspots: hotspots }),
 
   isLayerVisible: (layerId) => {
     const layer = get().layers.find((l) => l.id === layerId);

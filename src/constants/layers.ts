@@ -93,6 +93,34 @@ export const LAYER_CONFIGS: LayerConfig[] = [
     color: [96, 165, 250],
     description: "Density heatmap of vessel positions",
   },
+  {
+    id: "gdelt-events",
+    name: "GDELT Events",
+    category: "geopolitical",
+    visible: false,
+    opacity: 0.75,
+    color: [168, 85, 247],
+    description: "GDELT global event database — conflict and cooperation signals",
+  },
+  {
+    id: "acled-events",
+    name: "ACLED Conflict",
+    category: "geopolitical",
+    visible: false,
+    opacity: 0.8,
+    color: [239, 68, 68],
+    description: "Armed conflict events with actor attribution and fatalities",
+    requiresApiKey: "acled",
+  },
+  {
+    id: "firms-hotspots",
+    name: "Fire Detection (FIRMS)",
+    category: "natural",
+    visible: false,
+    opacity: 0.7,
+    color: [245, 158, 11],
+    description: "NASA FIRMS satellite active fire / thermal anomaly detections",
+  },
 ];
 
 export const LAYER_CATEGORIES = [
@@ -100,6 +128,7 @@ export const LAYER_CATEGORIES = [
   { id: "military", label: "Military", icon: "shield" },
   { id: "infrastructure", label: "Infrastructure", icon: "building" },
   { id: "geopolitical", label: "Geopolitical", icon: "globe" },
+  { id: "natural", label: "Natural / Environmental", icon: "flame" },
 ] as const;
 
 export const API_KEY_CONFIGS: Record<
@@ -152,5 +181,23 @@ export const API_KEY_CONFIGS: Record<
     description:
       "Optional: Premium map tiles. Free tier includes 100k tile loads/month.",
     docsUrl: "https://docs.maptiler.com/",
+  },
+  acled: {
+    label: "ACLED (Conflict Data)",
+    description:
+      "Armed conflict event data. Free API key + email from acleddata.com.",
+    docsUrl: "https://acleddata.com/acleddatanew/wp-content/uploads/2021/11/ACLED_APInew-Guide_Oct2021.pdf",
+  },
+  acled_email: {
+    label: "ACLED Email",
+    description:
+      "Email address used for ACLED API registration (required with API key).",
+    docsUrl: "https://acleddata.com/",
+  },
+  firms: {
+    label: "NASA FIRMS (Fire Data)",
+    description:
+      "Optional MAP_KEY for higher rate limits. Free from firms.modaps.eosdis.nasa.gov. Works without key.",
+    docsUrl: "https://firms.modaps.eosdis.nasa.gov/api/area/",
   },
 };

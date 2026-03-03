@@ -347,6 +347,104 @@ export interface Measurement {
   createdAt: string;
 }
 
+// ── GDELT Event Types ──────────────────────────────────────────────────────
+
+export interface GdeltEvent {
+  id: string;
+  date: string;
+  latitude: number;
+  longitude: number;
+  eventCode: string;
+  eventDescription: string;
+  actor1: string;
+  actor2: string;
+  goldsteinScale: number; // -10 (conflict) to +10 (cooperation)
+  numMentions: number;
+  avgTone: number;
+  sourceUrl?: string;
+  country?: string;
+}
+
+export interface GdeltTensionPair {
+  country1: string;
+  country2: string;
+  score: number;
+  change: number; // percent change
+  trend: "rising" | "falling" | "stable";
+  updatedAt: string;
+}
+
+// ── ACLED Event Types ──────────────────────────────────────────────────────
+
+export interface AcledEvent {
+  id: string;
+  eventDate: string;
+  eventType: string;
+  subEventType: string;
+  actor1: string;
+  actor2: string;
+  country: string;
+  admin1: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  fatalities: number;
+  notes: string;
+  source: string;
+}
+
+// ── NASA FIRMS Fire Types ──────────────────────────────────────────────────
+
+export interface FirmsHotspot {
+  latitude: number;
+  longitude: number;
+  brightness: number;
+  scan: number;
+  track: number;
+  acqDate: string;
+  acqTime: string;
+  satellite: string;
+  confidence: string | number;
+  frp: number; // fire radiative power in MW
+  daynight: "D" | "N";
+  country?: string;
+}
+
+// ── Signal Fusion / Anomaly Detection Types ────────────────────────────────
+
+export interface SignalSource {
+  id: string;
+  name: string;
+  status: "live" | "degraded" | "offline" | "stale";
+  lastUpdated: string | null;
+  eventCount: number;
+  errorMessage?: string;
+}
+
+export interface AnomalyAlert {
+  id: string;
+  region: string;
+  signalType: string;
+  currentValue: number;
+  baselineMean: number;
+  baselineStdDev: number;
+  zScore: number;
+  severity: "elevated" | "high" | "critical";
+  message: string;
+  timestamp: string;
+  coordinates?: [number, number];
+}
+
+export interface RegionalConvergence {
+  region: string;
+  coordinates: [number, number];
+  radiusKm: number;
+  signals: { type: string; count: number; zScore: number }[];
+  convergenceScore: number;
+  severity: "moderate" | "high" | "critical";
+  timestamp: string;
+}
+
 // ── Panel Types ─────────────────────────────────────────────────────────────
 
 export type PanelId =
@@ -358,7 +456,8 @@ export type PanelId =
   | "twitter"
   | "settings"
   | "alerts"
-  | "timeline";
+  | "timeline"
+  | "signals";
 
 // ── Tauri IPC Types ─────────────────────────────────────────────────────────
 

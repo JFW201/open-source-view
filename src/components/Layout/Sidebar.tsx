@@ -11,6 +11,7 @@ import {
   PanelLeft,
   Bell,
   Clock,
+  Activity,
 } from "lucide-react";
 import { usePanelStore } from "../../store/panelStore";
 import { useAlertStore } from "../../store/alertStore";
@@ -39,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
     badge: () => useAlertStore.getState().unreadCount,
   },
   { id: "timeline", label: "Timeline", icon: <Clock size={16} /> },
+  { id: "signals", label: "Signals", icon: <Activity size={16} /> },
   { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 

@@ -38,6 +38,12 @@ import {
   createVesselHeatmapLayer,
 } from "./layers/heatmapLayers";
 
+import {
+  createGdeltEventsLayer,
+  createAcledEventsLayer,
+  createFirmsHotspotsLayer,
+} from "./layers/osintLayers";
+
 import { PlaybackControl } from "./controls/PlaybackControl";
 import { MapToolbar } from "./controls/MapToolbar";
 
@@ -63,6 +69,9 @@ export const WaldorfMap: React.FC = () => {
   const countryBoundaries = useMapStore((s) => s.countryBoundaries);
   const hoveredCountryCode = useMapStore((s) => s.hoveredCountryCode);
   const setHoveredCountryCode = useMapStore((s) => s.setHoveredCountryCode);
+  const gdeltEvents = useMapStore((s) => s.gdeltEvents);
+  const acledEvents = useMapStore((s) => s.acledEvents);
+  const firmsHotspots = useMapStore((s) => s.firmsHotspots);
   const mapStyle = useSettingsStore((s) => s.settings.mapStyle);
   const { setActivePanel } = usePanelStore();
 
@@ -205,6 +214,10 @@ export const WaldorfMap: React.FC = () => {
       ...createNuclearFacilitiesLayer(NUCLEAR_FACILITIES, layers),
       ...createSeaTrafficLayer(vessels, layers),
       ...createAirTrafficLayer(aircraft, layers),
+      // OSINT data layers
+      ...createGdeltEventsLayer(gdeltEvents, layers),
+      ...createAcledEventsLayer(acledEvents, layers),
+      ...createFirmsHotspotsLayer(firmsHotspots, layers),
       // Annotations & measurements on top
       ...createAnnotationLayers(annotations),
       ...createPendingPolygonLayer(pendingPolygonPoints),
@@ -223,6 +236,9 @@ export const WaldorfMap: React.FC = () => {
     measurements,
     pendingPolygonPoints,
     pendingMeasurePoints,
+    gdeltEvents,
+    acledEvents,
+    firmsHotspots,
   ]);
 
   const getTooltip = useCallback(({ object }: { object: any }) => {
@@ -306,6 +322,42 @@ export const WaldorfMap: React.FC = () => {
           <div class="tooltip-title">${object.name}</div>
           <div class="tooltip-meta">${object.country} — ${object.type}</div>
           <div class="tooltip-detail">${object.status}${object.capacity_mw ? ` | ${object.capacity_mw} MW` : ""}</div>
+        </div>`,
+        style: { backgroundColor: "transparent", border: "none", padding: 0 },
+      };
+    }
+
+    // GDELT event
+    if (object.goldsteinScale !== undefined && object.eventCode) {
+      return {
+        html: `<div class="waldorf-tooltip">
+          <div class="tooltip-title">${object.eventDescription || object.eventCode}</div>
+          <div class="tooltip-meta">${object.actor1}${object.actor2 ? ` → ${object.actor2}` : ""}</div>
+          <div class="tooltip-detail">Goldstein: ${object.goldsteinScale} | ${object.numMentions} mentions | Tone: ${object.avgTone?.toFixed(1)}</div>
+        </div>`,
+        style: { backgroundColor: "transparent", border: "none", padding: 0 },
+      };
+    }
+
+    // ACLED conflict event
+    if (object.eventType && object.fatalities !== undefined && object.actor1) {
+      return {
+        html: `<div class="waldorf-tooltip">
+          <div class="tooltip-title">${object.eventType}${object.subEventType ? ` — ${object.subEventType}` : ""}</div>
+          <div class="tooltip-meta">${object.actor1}${object.actor2 ? ` vs ${object.actor2}` : ""}</div>
+          <div class="tooltip-detail">${object.location}, ${object.country} | ${object.fatalities} fatalities | ${object.eventDate}</div>
+        </div>`,
+        style: { backgroundColor: "transparent", border: "none", padding: 0 },
+      };
+    }
+
+    // FIRMS fire hotspot
+    if (object.frp !== undefined && object.brightness !== undefined && object.satellite) {
+      return {
+        html: `<div class="waldorf-tooltip">
+          <div class="tooltip-title">Fire Hotspot (${object.satellite})</div>
+          <div class="tooltip-meta">FRP: ${object.frp} MW | Brightness: ${object.brightness}K</div>
+          <div class="tooltip-detail">${object.acqDate} ${object.acqTime} | Confidence: ${object.confidence} | ${object.daynight === "D" ? "Day" : "Night"}</div>
         </div>`,
         style: { backgroundColor: "transparent", border: "none", padding: 0 },
       };

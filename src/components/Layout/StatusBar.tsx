@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Wifi, WifiOff, Clock, MapPin } from "lucide-react";
+import { Wifi, WifiOff, Clock, MapPin, Activity } from "lucide-react";
 import { useMapStore } from "../../store/mapStore";
 import { useNewsStore } from "../../store/newsStore";
+import { useSignalFusionStore } from "../../store/signalFusionStore";
 
 export const StatusBar: React.FC = () => {
   const viewState = useMapStore((s) => s.viewState);
   const aircraft = useMapStore((s) => s.aircraft);
   const vessels = useMapStore((s) => s.vessels);
+  const gdeltEvents = useMapStore((s) => s.gdeltEvents);
+  const acledEvents = useMapStore((s) => s.acledEvents);
+  const firmsHotspots = useMapStore((s) => s.firmsHotspots);
   const newsCount = useNewsStore((s) => s.items.length);
   const lastUpdated = useNewsStore((s) => s.lastUpdated);
+  const sources = useSignalFusionStore((s) => s.sources);
+  const anomalyCount = useSignalFusionStore((s) => s.anomalies.length);
+  const liveSources = sources.filter((s) => s.status === "live").length;
 
   const [isConnected, setIsConnected] = useState(navigator.onLine);
 
@@ -49,6 +56,34 @@ export const StatusBar: React.FC = () => {
             <span>{vessels.length} vessels</span>
           </>
         )}
+        {gdeltEvents.length > 0 && (
+          <>
+            <span className="text-waldorf-border">|</span>
+            <span>{gdeltEvents.length} GDELT</span>
+          </>
+        )}
+        {acledEvents.length > 0 && (
+          <>
+            <span className="text-waldorf-border">|</span>
+            <span>{acledEvents.length} ACLED</span>
+          </>
+        )}
+        {firmsHotspots.length > 0 && (
+          <>
+            <span className="text-waldorf-border">|</span>
+            <span>{firmsHotspots.length} fires</span>
+          </>
+        )}
+        <span className="text-waldorf-border">|</span>
+        <span className="flex items-center gap-1">
+          <Activity size={9} />
+          {liveSources}/{sources.length} sources
+          {anomalyCount > 0 && (
+            <span className="text-waldorf-danger ml-0.5">
+              ({anomalyCount} anomalies)
+            </span>
+          )}
+        </span>
       </div>
 
       {/* Center: timestamp */}
