@@ -4,7 +4,80 @@ Common issues and their solutions when running Waldorf.
 
 ---
 
-## Installation Issues
+## Installer Issues
+
+These issues apply when installing Waldorf from a [pre-built release](https://github.com/JFW201/open-source-view/releases).
+
+### macOS Gatekeeper warning
+
+**Symptoms:** "Waldorf can't be opened because it is from an unidentified developer" or "Waldorf is damaged and can't be opened."
+
+**Fix:**
+1. Right-click (or Control-click) the **Waldorf** app in your Applications folder
+2. Select **Open** from the context menu
+3. Click **Open** in the dialog that appears
+4. Waldorf will launch normally from now on — this step is only needed once
+
+If that doesn't work:
+```bash
+# Remove the quarantine attribute (open Terminal.app just this once)
+xattr -cr /Applications/Waldorf.app
+```
+
+**Why this happens:** Unsigned or notarization-pending apps trigger Gatekeeper. This does not indicate malware — Waldorf is open source and you can [inspect the code](https://github.com/JFW201/open-source-view) or build it yourself.
+
+### Windows SmartScreen warning
+
+**Symptoms:** "Windows protected your PC" / "Microsoft Defender SmartScreen prevented an unrecognized app from starting."
+
+**Fix:**
+1. Click **More info** in the SmartScreen dialog
+2. Click **Run anyway**
+
+**Why this happens:** SmartScreen flags apps that don't have an Extended Validation (EV) code-signing certificate. This is normal for open-source software. You can verify the source on [GitHub](https://github.com/JFW201/open-source-view).
+
+### Linux AppImage won't run
+
+**Symptoms:** Double-clicking the `.AppImage` file does nothing or shows a permission error.
+
+**Fix:**
+```bash
+# Make the AppImage executable
+chmod +x Waldorf_*.AppImage
+
+# Run it
+./Waldorf_*.AppImage
+```
+
+Some desktop environments also let you right-click → Properties → Permissions → check "Allow executing file as a program."
+
+### Linux `.deb` or `.rpm` install fails
+
+**Debian/Ubuntu:**
+```bash
+# Install with dependency resolution
+sudo apt install ./waldorf_*.deb
+```
+
+**Fedora/RHEL:**
+```bash
+sudo dnf install ./waldorf_*.rpm
+```
+
+If WebKit dependencies are missing, install them first:
+```bash
+# Debian/Ubuntu
+sudo apt install -y libwebkit2gtk-4.1-0 libayatana-appindicator3-1
+
+# Fedora
+sudo dnf install webkit2gtk4.1 libappindicator-gtk3
+```
+
+---
+
+## Build Issues (Development)
+
+These issues apply when building Waldorf from source. If you installed from a [pre-built release](https://github.com/JFW201/open-source-view/releases), see [Installer Issues](#installer-issues) above.
 
 ### Rust compilation fails
 
@@ -115,10 +188,6 @@ npx tauri build
 3. Check Debug panel's store state viewer for unusually large datasets
 4. Restart the app to clear in-memory caches
 
----
-
-## Build Issues
-
 ### `tsc` type errors
 
 ```bash
@@ -206,12 +275,11 @@ To access: Click the bug icon in the sidebar, or navigate to the Debug panel.
 ## Getting Help
 
 If your issue isn't covered here:
-1. Check the Debug panel for diagnostic information
-2. Open browser DevTools (F12) for detailed error messages
-3. Search [existing issues](https://github.com/JFW201/open-source-view/issues) on GitHub
-4. Open a new issue with:
+1. Check the Debug panel for diagnostic information (bug icon in the sidebar)
+2. Search [existing issues](https://github.com/JFW201/open-source-view/issues) on GitHub
+3. Open a new issue with:
    - OS and version
-   - Node.js version (`node -v`)
-   - Rust version (`rustc --version`)
+   - How you installed (pre-built release or built from source)
    - Steps to reproduce
-   - Error messages from Debug panel or console
+   - Error messages from the Debug panel
+   - For developers: Node.js version (`node -v`) and Rust version (`rustc --version`)

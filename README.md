@@ -86,7 +86,54 @@ A comprehensive OSINT desktop application built with **Tauri v2 + React + deck.g
 
 ---
 
-## Getting Started
+## Download & Install
+
+**No terminal, no dependencies, no build tools.** Download the pre-built installer for your platform, install, and run.
+
+### 1. Download
+
+Go to the [**Releases page**](https://github.com/JFW201/open-source-view/releases) and download the latest installer for your platform:
+
+| Platform | File | What to download |
+|----------|------|-----------------|
+| **macOS (Apple Silicon)** | `Waldorf_x.x.x_aarch64.dmg` | M1 / M2 / M3 / M4 Macs |
+| **macOS (Intel)** | `Waldorf_x.x.x_x64.dmg` | Older Intel-based Macs |
+| **Windows** | `Waldorf_x.x.x_x64-setup.exe` or `.msi` | Windows 10/11 (64-bit) |
+| **Linux** | `.AppImage`, `.deb`, or `.rpm` | Choose based on your distro |
+
+### 2. Install
+
+**macOS:**
+1. Open the downloaded `.dmg` file
+2. Drag **Waldorf** into the **Applications** folder
+3. Launch Waldorf from Applications
+4. If macOS shows "app is from an unidentified developer", right-click the app → **Open** → click **Open** in the dialog (this is only needed once — see [Troubleshooting](./TROUBLESHOOTING.md#macos-gatekeeper-warning))
+
+**Windows:**
+1. Run the downloaded `.exe` or `.msi` installer
+2. Follow the installation wizard
+3. Launch Waldorf from the Start menu or desktop shortcut
+4. If Windows SmartScreen appears, click **More info** → **Run anyway** (see [Troubleshooting](./TROUBLESHOOTING.md#windows-smartscreen-warning))
+
+**Linux:**
+- **AppImage:** Make executable (`chmod +x Waldorf_*.AppImage`) and double-click, or run `./Waldorf_*.AppImage`
+- **Debian/Ubuntu:** `sudo dpkg -i waldorf_*.deb`
+- **Fedora/RHEL:** `sudo rpm -i waldorf_*.rpm`
+
+### 3. Get Started
+
+Everything is bundled in the installer — no Node.js, Rust, or command-line tools required. Just launch the app and:
+
+1. **Explore the map** — all 13 static/reference layers (military bases, data centers, undersea cables, nuclear facilities, conflict zones) work immediately
+2. **Browse news feeds** — 30+ RSS feeds load automatically with no configuration
+3. **View live data** — GDELT global events and NASA FIRMS fire detection work out of the box (no API key needed)
+4. **Add API keys** (optional) — open the **Settings** panel (gear icon in the sidebar) to unlock live air/sea traffic, AI summaries, market data, and more (see [API Key Configuration](#api-key-configuration) below)
+
+---
+
+## Development Setup
+
+> **Note:** This section is for developers who want to build from source, contribute, or modify the code. If you just want to use Waldorf, see [Download & Install](#download--install) above.
 
 ### Prerequisites
 
@@ -147,7 +194,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 ```
 
-### Install & Run
+### Clone & Run
 
 ```bash
 # Clone the repository
