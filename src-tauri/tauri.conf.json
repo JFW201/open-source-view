@@ -70,7 +70,7 @@
     "store": {},
     "updater": {
       "endpoints": [
-        "https://github.com/OWNER/waldorf/releases/latest/download/latest.json"
+        "https://github.com/JFW201/open-source-view/releases/latest/download/latest.json"
       ],
       "pubkey": ""
     }
